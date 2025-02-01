@@ -10,6 +10,7 @@ variables:
   buildConfiguration: 'Release'
   wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
   dotnetSdkVersion: '6.x'
+  CACHE_RESTORED: false
 
 steps:
 - task: UseDotNet@2
@@ -17,10 +18,18 @@ steps:
   inputs:
     version: '$(dotnetSdkVersion)'
 
+- task: Cache@2
+  inputs:
+    key: '"npm" | "$(Agent.OS)" | $(System.DefaultWorkingDirectory)/package.json'
+    path: '.\node_modules'
+    cacheHitVar: 'CACHE_RESTORED'
 - task: Npm@1
   displayName: 'Run npm install'
   inputs:
     verbose: false
+    command: ci
+  condition: ne(variables.CACHE_RESTORED, 'true')
+    
 
 - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
   displayName: 'Compile Sass assets'
